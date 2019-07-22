@@ -13,8 +13,10 @@ import json
 
 # This script will suggest taxons for a new piece of content
 
-# To try it out, you'll need 'clean_content.csv' in your DATADIR,
-# an appropriate environment variable to the DATADIR
+# To try it out, you'll need 'clean_content.csv', 'labelled.csv.gz' and 'embedded_clean_contentdata.npy'
+# from the content-similarity-models and/or govuk-taxonomy-supervised learning (both alphagov github projects)
+# in your data folder
+
 # Edit the variable below to contain the text for your new piece of content
 
 text = "I broke free on a Saturday morning I put the pedal to the floor Headed north on Mills Avenue And listened to the engine roar My broken house behind me And good things ahead A girl named Cathy Wants a little of my time Six cylinders underneath the hood Crashing and kicking Aha! Listen to the engine whine I am going to make it through this year If it kills me I am going to make it though this year If it kills me I played video games in a drunken haze I was seventeen years young Hurt my knuckles punching the machines The taste of Scotch rich on my tongue And then Cathy showed up And we hung out Trading swigs from a bottle All bitter and clean Locking eyes Holding hands Twin high maintenance machines I am going to make it through this year If it kills me I am going to make it though this year If it kills me I drove home in the California dusk I could feel the alcohol inside of me hum Pictured the look on my stepfather's face Ready for the bad things to come I down shifted As I pulled into the driveway The motor screaming out Stuck in second gear The scene ends badly As you might imagine In a cavalcade of anger and fear There will be feasting and dancing In Jerusalem next year"
@@ -26,13 +28,14 @@ with tf.Session() as session:
     session.run([tf.global_variables_initializer(), tf.tables_initializer()])
     new_content = session.run(embed([text]))
 
-DATADIR = os.getenv("DATADIR")
-labelled = pd.read_csv(os.path.join(DATADIR, 'labelled.csv.gz'), compression='gzip', low_memory=False)
-embedded_sentences = np.load(os.path.join(DATADIR, 'embedded_clean_contentdata.npy'))
+local_dirname = os.path.dirname(__file__)
+labelled_file_path = os.path.join(local_dirname, 'data/labelled.csv.gz')
+labelled = pd.read_csv(labelled_file_path, compression='gzip', low_memory=False)
+embedded_clean_content_path = os.path.join(local_dirname, 'data/embedded_clean_contentdata.npy')
+embedded_sentences = np.load(embedded_clean_content_path)
 
-content = pd.read_csv(
-    os.path.join(DATADIR, 'clean_content.csv'),
-    low_memory=False)
+clean_content_path = os.path.join(local_dirname, 'data/clean_content.csv')
+content = pd.read_csv(clean_content_path, low_memory=False)
 
 def get_top_20_links(D_chunk, start):
     """return only the top 20 (including self) related link indices and distance metric values
