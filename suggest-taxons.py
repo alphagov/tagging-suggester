@@ -8,6 +8,7 @@ import pandas as pd
 from tqdm import tnrange, tqdm_notebook
 from sklearn.metrics import pairwise_distances_chunked
 import urllib.request
+from urllib.error import URLError, HTTPError
 import json
 
 
@@ -68,8 +69,12 @@ for url in similar_item_urls:
         page = urllib.request.urlopen('https://www.gov.uk/api/content' + url)
         content_item = json.loads(page.read())
         taxons += list(map(lambda taxon: taxon['base_path'], content_item.get('links', {}).get('taxons', [])))
-    except:
-        print("Couldn't process: " + url)
+    except HTTPError as e:
+        print("Couldn't get " + url + ", error code: " + e.code)
+    except URLError as e:
+        print("Couldn't get " + url + ", reason: " + e.reason)
+    else:
+        print('Unknown failure for url: ' + url)
 taxons = [x for i, x in enumerate(taxons) if taxons.index(x) == i]
 print("Suggested taxons (in order of relevancy)")
 for taxon in taxons:
