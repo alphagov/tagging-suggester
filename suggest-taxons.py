@@ -28,7 +28,7 @@ with tf.Session() as session:
     session.run([tf.global_variables_initializer(), tf.tables_initializer()])
     new_content = session.run(embed([text]))
 
-local_dirname = os.path.dirname(__file__)
+local_dirname = os.path.dirname('__file__')
 labelled_file_path = os.path.join(local_dirname, 'data/labelled.csv.gz')
 labelled = pd.read_csv(labelled_file_path, compression='gzip', low_memory=False)
 embedded_clean_content_path = os.path.join(local_dirname, 'data/embedded_clean_contentdata.npy')
@@ -69,9 +69,8 @@ for url in similar_item_urls:
         content_item = json.loads(page.read())
         taxons += list(map(lambda taxon: taxon['base_path'], content_item.get('links', {}).get('taxons', [])))
     except:
-        print("Couldnt process: " + url)
-
-taxons = list(set(taxons))
+        print("Couldn't process: " + url)
+taxons = [x for i, x in enumerate(taxons) if taxons.index(x) == i]
 print("Suggested taxons (in order of relevancy)")
 for taxon in taxons:
     print(taxon)
