@@ -13,6 +13,9 @@ import json
 
 
 # This script will suggest taxons for a new piece of content
+# It does this by finding the top 20 pieces of content that some new content is
+# most similar to. It then finds the taxons that those pieces of content
+# are tagged to and presents a list of the most frequently used taxons.
 
 # To try it out, you'll need 'clean_content.csv', 'labelled.csv.gz' and 'embedded_clean_contentdata.npy'
 # from the content-similarity-models and/or govuk-taxonomy-supervised learning (both alphagov github projects)
@@ -29,13 +32,13 @@ with tf.Session() as session:
     session.run([tf.global_variables_initializer(), tf.tables_initializer()])
     new_content = session.run(embed([text]))
 
-local_dirname = os.path.dirname('__file__')
-labelled_file_path = os.path.join(local_dirname, 'data/labelled.csv.gz')
+DATADIR = os.getenv("DATADIR")
+labelled_file_path = os.path.join(DATADIR, 'labelled.csv.gz')
 labelled = pd.read_csv(labelled_file_path, compression='gzip', low_memory=False)
-embedded_clean_content_path = os.path.join(local_dirname, 'data/embedded_clean_contentdata.npy')
+embedded_clean_content_path = os.path.join(DATADIR, 'embedded_clean_contentdata.npy')
 embedded_sentences = np.load(embedded_clean_content_path)
 
-clean_content_path = os.path.join(local_dirname, 'data/clean_content.csv')
+clean_content_path = os.path.join(DATADIR, 'clean_content.csv')
 content = pd.read_csv(clean_content_path, low_memory=False)
 
 def get_top_20_links(D_chunk, start):
