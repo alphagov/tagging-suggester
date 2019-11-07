@@ -37,9 +37,9 @@ class BranchPredictor:
         # recursive_children includes self so we only need to search
         # if there is more than one
         if os.path.isfile(self.model_path(node)) == False:
-            if len(node.recursive_children()) > 1:
-                texts = []
-                y = []
+            texts = []
+            y = []
+            if self.can_make_prediction_for_node(node):
                 for child_node in node.recursive_children():
                     content_for_taxon = self.content.content_for_taxon(child_node)
                     if len(content_for_taxon) > 0:
@@ -60,3 +60,26 @@ class BranchPredictor:
 
     def vectorizer_path(self, node):
         return os.path.join(dirs.processed_data_dir(), "models", "branch_predictor", f"branch_predictor_vectorizer_#{node.unique_title()}.pkl")
+
+    def can_make_prediction_for_node(self, node):
+        # We can't make a prediction for a node that doesn't have children
+        return len(node.recursive_children()) > 1
+
+    def predict(self, apex_node, text_to_predict):
+        node = apex_node
+        has_at_least_one_child_taxon_which_can_have_predictions = True
+        while any(node.children) and has_at_least_one_child_taxon_which_can_have_predictions:
+            has_at_least_one_child_taxon_which_can_have_predictions = False
+            for child_taxon in node.children:
+                if self.can_make_prediction_for_node(child_taxon):
+                    has_at_least_one_child_taxon_which_can_have_predictions = True
+                    model = dirs.open_pickle_file(self.model_path(child_taxon))
+                    vectorizer = dirs.open_pickle_file(self.vectorizer_path(child_taxon))
+                    predicted_node_unique_title = model.predict(vectorizer.transform([text_to_predict]))[0]
+                    # This is hacky, we want to get rid of this
+                    node = None
+                    for child_taxon_recursive_child in child_taxon.recursive_children():
+                        if child_taxon_recursive_child.unique_title() == predicted_node_unique_title:
+                            node = child_taxon_recursive_child
+                            break
+        return [taxon.unique_title() for taxon in node.recursive_parents()]
