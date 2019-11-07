@@ -1,6 +1,5 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-import pandas as pd
 import numpy as np
 import os
 import utils.directories as dirs
@@ -51,18 +50,6 @@ class ApexNodePredictor:
         model.fit(X, y)
         dirs.save_pickle_file(model, self.model_file_path())
 
-    def predict(self, text_to_predict):
-        """
-        Predicts which apex nodes content should be tagged to
-        :param text_to_predict: String, text to predict
-        :return: List, names of apex taxons the content should be tagged to, unsorted.
-        """
-        # TODO: Find way/ensure apex taxons are sorted
-        model = dirs.open_pickle_file(self.model_file_path())
-        vectorizer = dirs.open_pickle_file(self.vectorizer_file_path())
-        indicies = np.argwhere(model.predict_proba(vectorizer.transform([text_to_predict]))[0] > self.threshold())
-        return [item for sublist in model.classes_[indicies].tolist() for item in sublist]
-
     def model_file_path(self):
         return os.path.join(dirs.processed_data_dir(), "models", "apex_node", "apex_node_model.pkl")
 
@@ -75,3 +62,25 @@ class ApexNodePredictor:
         to be good enough. Tested in order to find the best F1 score
         """
         return 0.225
+
+    def predict(self, tree, text_to_predict):
+        """
+        Predicts which apex nodes content should be tagged to
+        :param text_to_predict: String, text to predict
+        :return: List, names of apex taxons the content should be tagged to, unsorted.
+        """
+        model = dirs.open_pickle_file(self.model_file_path())
+        vectorizer = dirs.open_pickle_file(self.vectorizer_file_path())
+        class_probabilities = model.predict_proba(vectorizer.transform([text_to_predict]))[0]
+        indicies_of_classes_above_threshold = np.argwhere(class_probabilities > self.threshold())
+        # Order results by probability (highest first)
+        results = {}
+        for index in indicies_of_classes_above_threshold:
+            predicted_node_unique_title = model.classes_[index][0]
+            node = None
+            for apex_node in tree.apex_nodes():
+                if apex_node.unique_title() == predicted_node_unique_title:
+                    node = apex_node
+                    break
+            results[node] = class_probabilities[index]
+        return sorted(results, key=results.get, reverse=True)
