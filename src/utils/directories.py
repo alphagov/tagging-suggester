@@ -14,7 +14,7 @@ def processed_data_dir():
     return os.path.abspath(data_dir() + "/processed")
 
 def open_pickle_file(path):
-    pickle.load(open(path, "rb"))
+    return pickle.load(open(path, "rb"))
 
 def save_pickle_file(variable, path):
     pickle.dump(variable, open(path, "wb"))
