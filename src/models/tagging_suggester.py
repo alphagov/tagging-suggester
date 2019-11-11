@@ -6,6 +6,9 @@ from models.branch_predictor import *
 import datetime
 
 class TaggingSuggester:
+    def __init__(self):
+        self.tree = Tree()
+
     def train(self):
         """
         Processes data and trains models necessary to make tagging suggestions.
@@ -15,20 +18,18 @@ class TaggingSuggester:
         start = datetime.datetime.now()
         print("Loading data")
         content = Content()
-        tree = Tree()
         print("Processing data")
         RepresentativeContent(content, tree).generate()
         print("Training models")
-        ApexNodePredictor().train(tree)
-        BranchPredictor().train(content, tree)
+        ApexNodePredictor().train(self.tree)
+        BranchPredictor().train(content, self.tree)
         end = datetime.datetime.now()
         print(f"DONE! Took: {end - start}")
 
     def predict(self, text):
         print("PREDICTING")
         start = datetime.datetime.now()
-        tree = Tree()
-        apex_nodes = ApexNodePredictor().predict(tree, text)
+        apex_nodes = ApexNodePredictor().predict(self.tree, text)
         suggestions = []
         for apex_node in apex_nodes:
             suggestions.append(BranchPredictor().predict(apex_node, text))
