@@ -2,7 +2,7 @@ import os
 import errno
 import pandas as pd
 from sklearn.metrics import pairwise_distances_chunked
-from utils import directories as dirs
+from src.utils import directories as dirs
 
 class RepresentativeContent:
     def __init__(self, content, tree):

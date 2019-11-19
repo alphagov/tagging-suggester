@@ -25,7 +25,7 @@ class Node:
         Some taxa have identical names so prepend part of the content_id
         :return: String, title of taxon that is (almost guaranteed) to be unique
         """
-        return self.content_id[:3] + " " + self.title
+        return self.content_id + " " + self.title
 
     def recursive_parents(self):
         """

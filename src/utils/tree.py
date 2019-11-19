@@ -1,5 +1,5 @@
-from utils.node import Node
-import utils.directories as dirs
+from src.utils.node import Node
+import src.utils.directories as dirs
 import gzip
 import ijson
 import os
@@ -8,7 +8,7 @@ import errno
 class Tree:
     def __init__(self):
         self.nodes = {}
-        taxons_path = os.path.join(dirs.raw_data_dir(), 'taxons.json.gz')
+        taxons_path = os.path.join(dirs.processed_data_dir(), 'taxons.json.gz')
         if not os.path.exists(taxons_path) or not os.path.isfile(taxons_path):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), f"Taxon file doesn't exist, should be at: {taxons_path}")
         with gzip.open(taxons_path, mode='rt') as input_file:

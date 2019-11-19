@@ -1,14 +1,13 @@
 # local package
 -e .
 flask >= 1.1.1
-
-# external requirements
-click
-Sphinx
-coverage
-awscli
-flake8
-python-dotenv>=0.5.1
+gunicorn==19.9.0
+pandas==0.25.0
+pickleshare==0.7.5
+sklearn
+numpy==1.17.0
+nltk==3.4.5
+ijson==2.4
 
 # test requirements
 pytest==5.0.1
