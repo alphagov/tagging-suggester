@@ -1,10 +1,11 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 import numpy as np
-import os
-import utils.directories as dirs
-import utils.nlp as nlp
-from data.representative_content import *
+import src.utils.nlp as nlp
+from src.data.representative_content import *
+from src.utils import directories as dirs
+import os as apex_node_os
+
 
 class ApexNodePredictor:
     def train(self, tree):
@@ -24,10 +25,10 @@ class ApexNodePredictor:
         """
         texts = []
         y = []
-        for apex_node in self.tree.apex_nodes():
+        for apex_node in self.tree.apex_nodes() :
             texts_for_apex_node = RepresentativeContent.representative_content_for_taxon(apex_node)
             texts += texts_for_apex_node
-            y += [apex_node.unique_title()] * len(texts_for_apex_node)
+            y += [apex_node.content_id] * len(texts_for_apex_node)
         return [texts, y]
 
     def fit_vectorizer(self, texts):
@@ -51,10 +52,10 @@ class ApexNodePredictor:
         dirs.save_pickle_file(model, self.model_file_path())
 
     def model_file_path(self):
-        return os.path.join(dirs.processed_data_dir(), "models", "apex_node", "apex_node_model.pkl")
+        return apex_node_os.path.join(dirs.processed_data_dir(), "models", "apex_node", "apex_node_model.pkl")
 
     def vectorizer_file_path(self):
-        return os.path.join(dirs.processed_data_dir(), "models", "apex_node", "apex_node_vectorizer.pkl")
+        return apex_node_os.path.join(dirs.processed_data_dir(), "models", "apex_node", "apex_node_vectorizer.pkl")
 
     def threshold(self):
         """
@@ -69,18 +70,13 @@ class ApexNodePredictor:
         :param text_to_predict: String, text to predict
         :return: List, names of apex taxons the content should be tagged to, unsorted.
         """
-        model = dirs.open_pickle_file(self.model_file_path())
         vectorizer = dirs.open_pickle_file(self.vectorizer_file_path())
+        model = dirs.open_pickle_file(self.model_file_path())
         class_probabilities = model.predict_proba(vectorizer.transform([text_to_predict]))[0]
         indicies_of_classes_above_threshold = np.argwhere(class_probabilities > self.threshold())
         # Order results by probability (highest first)
         results = {}
         for index in indicies_of_classes_above_threshold:
-            predicted_node_unique_title = model.classes_[index][0]
-            node = None
-            for apex_node in tree.apex_nodes():
-                if apex_node.unique_title() == predicted_node_unique_title:
-                    node = apex_node
-                    break
-            results[node] = class_probabilities[index]
+            predicted_node_content_id = model.classes_[index][0]
+            results[tree.find(predicted_node_content_id)] = class_probabilities[index]
         return sorted(results, key=results.get, reverse=True)

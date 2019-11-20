@@ -1,7 +1,7 @@
 import os
 import errno
 import pandas as pd
-import utils.directories as dirs
+import src.utils.directories as dirs
 
 class Content:
     def __init__(self):

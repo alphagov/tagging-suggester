@@ -106,8 +106,8 @@ def test_apex_node_with_no_recursive_children_is_just_itself(apex_node_with_no_c
 def test_leaf_node_recursive_children_is_just_itself(leaf_node_fixture):
     assert leaf_node_fixture.recursive_children() == [leaf_node_fixture]
 
-def test_unique_title_is_the_title_and_some_content_id(apex_node_with_children_fixture):
-    assert '456 taxon b' == apex_node_with_children_fixture.unique_title()
+def test_unique_title_is_the_title_and_content_id(apex_node_with_children_fixture):
+    assert '456b taxon b' == apex_node_with_children_fixture.unique_title()
 
 def test_recursive_parents_is_all_parents_for_leaf_node(leaf_node_fixture):
     assert len(leaf_node_fixture.recursive_parents()) == 3

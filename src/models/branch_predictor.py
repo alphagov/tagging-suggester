@@ -1,7 +1,7 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-import utils.directories as dirs
-import utils.nlp as nlp
+import src.utils.directories as dirs
+import src.utils.nlp as nlp
 import os
 
 class BranchPredictor:
@@ -44,7 +44,7 @@ class BranchPredictor:
                     content_for_taxon = self.content.content_for_taxon(child_node)
                     if len(content_for_taxon) > 0:
                         texts += content_for_taxon
-                        y += [child_node.unique_title()] * len(content_for_taxon)
+                        y += [child_node.content_id] * len(content_for_taxon)
                 # Check there is more than one class to train on
                 if len(list(set(y))) > 1:
                     print(f"Generating BranchPredictor model for {node.title}")
@@ -65,7 +65,7 @@ class BranchPredictor:
         # We can't make a prediction for a node that doesn't have children
         return len(node.recursive_children()) > 1
 
-    def predict(self, apex_node, text_to_predict):
+    def predict(self, tree, apex_node, text_to_predict):
         node = apex_node
         has_at_least_one_child_taxon_which_can_have_predictions = True
         while any(node.children) and has_at_least_one_child_taxon_which_can_have_predictions:
@@ -75,11 +75,12 @@ class BranchPredictor:
                     has_at_least_one_child_taxon_which_can_have_predictions = True
                     model = dirs.open_pickle_file(self.model_path(child_taxon))
                     vectorizer = dirs.open_pickle_file(self.vectorizer_path(child_taxon))
-                    predicted_node_unique_title = model.predict(vectorizer.transform([text_to_predict]))[0]
-                    # This is hacky, we want to get rid of this
-                    node = None
-                    for child_taxon_recursive_child in child_taxon.recursive_children():
-                        if child_taxon_recursive_child.unique_title() == predicted_node_unique_title:
-                            node = child_taxon_recursive_child
-                            break
-        return [taxon.unique_title() for taxon in node.recursive_parents()]
+                    predicted_node_content_id = model.predict(vectorizer.transform([text_to_predict]))[0]
+                    node = tree.find(predicted_node_content_id)
+                    # # This is hacky, we want to get rid of this
+                    # node = None
+                    # for child_taxon_recursive_child in child_taxon.recursive_children():
+                    #     if child_taxon_recursive_child.unique_title() == predicted_node_unique_title:
+                    #         node = child_taxon_recursive_child
+                    #         break
+        return [taxon.content_id for taxon in node.recursive_parents()]

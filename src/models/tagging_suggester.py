@@ -1,8 +1,8 @@
-from utils.content import *
-from utils.tree import *
-from data.representative_content import *
-from models.apex_node_predictor import *
-from models.branch_predictor import *
+from src.utils.content import *
+from src.utils.tree import *
+from src.data.representative_content import *
+from src.models.apex_node_predictor import *
+from src.models.branch_predictor import BranchPredictor
 import datetime
 
 class TaggingSuggester:
@@ -19,7 +19,7 @@ class TaggingSuggester:
         print("Loading data")
         content = Content()
         print("Processing data")
-        RepresentativeContent(content, tree).generate()
+        RepresentativeContent(content, self.tree).generate()
         print("Training models")
         ApexNodePredictor().train(self.tree)
         BranchPredictor().train(content, self.tree)
@@ -32,7 +32,7 @@ class TaggingSuggester:
         apex_nodes = ApexNodePredictor().predict(self.tree, text)
         suggestions = []
         for apex_node in apex_nodes:
-            suggestions.append(BranchPredictor().predict(apex_node, text))
+            suggestions.append(BranchPredictor().predict(self.tree, apex_node, text))
         end = datetime.datetime.now()
         print(f"DONE! Took {end - start}")
         for suggestion in suggestions:
