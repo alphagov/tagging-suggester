@@ -1,0 +1,2 @@
+# Tell a Heroku dyno not to include certain things it doesn't need it it's slug
+data/processed/representative_content/
