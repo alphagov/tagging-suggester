@@ -77,10 +77,4 @@ class BranchPredictor:
                     vectorizer = dirs.open_pickle_file(self.vectorizer_path(child_taxon))
                     predicted_node_content_id = model.predict(vectorizer.transform([text_to_predict]))[0]
                     node = tree.find(predicted_node_content_id)
-                    # # This is hacky, we want to get rid of this
-                    # node = None
-                    # for child_taxon_recursive_child in child_taxon.recursive_children():
-                    #     if child_taxon_recursive_child.unique_title() == predicted_node_unique_title:
-                    #         node = child_taxon_recursive_child
-                    #         break
         return [taxon.content_id for taxon in node.recursive_parents()]
