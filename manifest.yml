@@ -1,0 +1,15 @@
+---
+applications:
+  - name: tagging-suggester
+    routes:
+      - route: tagging-suggester.cloudapps.digital
+    buildpacks:
+      - python_buildpack
+    instances: 1
+    disk_quota: 1GB
+    memory: 512M
+
+    # We can specify the command to run here in the manifest
+    # or in the Procfile. This might be useful if we want to
+    # diverge between 
+    # command: gunicorn -w 1 --thread=1 run:app --preload
