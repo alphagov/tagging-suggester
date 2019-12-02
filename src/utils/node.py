@@ -1,3 +1,5 @@
+import src.utils.misc as misc
+
 class Node:
     def __init__(self, entry, all_nodes):
         self.base_path = entry['base_path']
@@ -36,7 +38,7 @@ class Node:
         if self.parent:
             results.append(self.parent.recursive_parents())
         # Set to make them unique
-        flattened = self.__flatten(results)
+        flattened = misc.flatten(results)
         return self.__unique(flattened)
 
     def title_and_parent_title(self):
@@ -57,7 +59,7 @@ class Node:
         for child in self.children:
             results.append(child.recursive_children())
         # Set to make them unique
-        flattened = self.__flatten(results)
+        flattened = misc.flatten(results)
         return self.__unique(flattened)
 
     def all_siblings_and_children(self):
@@ -75,7 +77,7 @@ class Node:
             else:
                 for node in self.parent.children:
                     results.append(node.recursive_children())
-            flattened_results = self.__flatten(results)
+            flattened_results = misc.flatten(results)
             # Remove self from results
             self.all_sibs_and_children = [result for result in flattened_results if result.content_id != self.content_id]
             return self.all_sibs_and_children
@@ -87,17 +89,6 @@ class Node:
         :return: Bool, whether a taxon is a top level taxon
         """
         return self.parent is None
-
-    def __flatten(self, S):
-        """
-        Recursivey flattens a list of lists
-        :return: List, flattened list elements in sub-lists
-        """
-        if S == []:
-            return S
-        if isinstance(S[0], list):
-            return self.__flatten(S[0]) + self.__flatten(S[1:])
-        return S[:1] + self.__flatten(S[1:])
 
     def __unique(self, list):
         """

@@ -2,6 +2,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 import src.utils.directories as dirs
 import src.utils.nlp as nlp
+import numpy as np
 import os
 
 class BranchPredictor:
@@ -14,9 +15,8 @@ class BranchPredictor:
         """
         self.content = content
         self.tree = tree
-        for apex_node in self.tree.apex_nodes():
-            for node in apex_node.children:
-                self.train_models_for_node_and_children(node)
+        for node in self.tree.apex_nodes():
+            self.train_models_for_node_and_children(node)
 
     def train_models_for_node_and_children(self, node):
         """
@@ -40,11 +40,12 @@ class BranchPredictor:
             texts = []
             y = []
             if self.can_make_prediction_for_node(node):
-                for child_node in node.recursive_children():
-                    content_for_taxon = self.content.content_for_taxon(child_node)
-                    if len(content_for_taxon) > 0:
-                        texts += content_for_taxon
-                        y += [child_node.content_id] * len(content_for_taxon)
+                for child_node in node.children:
+                    for recursive_child_node in child_node.recursive_children():
+                        content_for_taxon = self.content.content_for_taxon(recursive_child_node)
+                        if len(content_for_taxon) > 0:
+                            texts += content_for_taxon
+                            y += [child_node.content_id] * len(content_for_taxon)
                 # Check there is more than one class to train on
                 if len(list(set(y))) > 1:
                     print(f"Generating BranchPredictor model for {node.title}")
@@ -65,16 +66,21 @@ class BranchPredictor:
         # We can't make a prediction for a node that doesn't have children
         return len(node.recursive_children()) > 1
 
-    def predict(self, tree, apex_node, text_to_predict):
+    def predict(self, tree, apex_node, text_to_predict, translated_tokenized_text_to_predict):
+        """
+        Makes a prediction for text_to_predict for any taxon beneath the apex_node
+        Uses the translated_tokenized_text_to_predict to tell the user which words
+        it considered important when making the prediction
+        """
         node = apex_node
-        has_at_least_one_child_taxon_which_can_have_predictions = True
-        while any(node.children) and has_at_least_one_child_taxon_which_can_have_predictions:
-            has_at_least_one_child_taxon_which_can_have_predictions = False
-            for child_taxon in node.children:
-                if self.can_make_prediction_for_node(child_taxon):
-                    has_at_least_one_child_taxon_which_can_have_predictions = True
-                    model = dirs.open_pickle_file(self.model_path(child_taxon))
-                    vectorizer = dirs.open_pickle_file(self.vectorizer_path(child_taxon))
-                    predicted_node_content_id = model.predict(vectorizer.transform([text_to_predict]))[0]
-                    node = tree.find(predicted_node_content_id)
-        return [taxon.content_id for taxon in node.recursive_parents()]
+        result = []
+        while self.can_make_prediction_for_node(node):
+            model = dirs.open_pickle_file(self.model_path(node))
+            vectorizer = dirs.open_pickle_file(self.vectorizer_path(node))
+            transformed_text = vectorizer.transform([text_to_predict])
+            words_to_explain_choice = nlp.prediction_explanation(vectorizer, transformed_text, translated_tokenized_text_to_predict)
+            probabilities = model.predict_proba(transformed_text)
+            highest_probability_content_id = model.classes_[np.argmax(probabilities)]
+            result.append({'taxon_content_id': highest_probability_content_id, 'explanation': words_to_explain_choice})
+            node = tree.find(highest_probability_content_id)
+        return result
