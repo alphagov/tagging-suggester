@@ -1,1 +1,1 @@
-web: gunicorn -w 1 --thread=1 run:app --preload
+web: gunicorn --thread=1 run:app --preload

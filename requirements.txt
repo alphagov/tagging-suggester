@@ -8,6 +8,6 @@ sklearn
 numpy==1.17.0
 nltk==3.4.5
 ijson==2.4
-
+pyxDamerauLevenshtein==1.5.3
 # test requirements
 pytest==5.0.1

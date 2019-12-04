@@ -64,7 +64,7 @@ class ApexNodePredictor:
         """
         return 0.225
 
-    def predict(self, tree, text_to_predict):
+    def predict(self, tree, text_to_predict, translated_tokenized_text):
         """
         Predicts which apex nodes content should be tagged to
         :param text_to_predict: String, text to predict
