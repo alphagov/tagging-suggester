@@ -64,7 +64,7 @@ class ApexNodePredictor:
         """
         return 0.225
 
-    def predict(self, tree, text_to_predict, translated_tokenized_text):
+    def predict(self, tree, text_to_predict, request_record):
         """
         Predicts which apex nodes content should be tagged to
         :param text_to_predict: String, text to predict
@@ -73,10 +73,14 @@ class ApexNodePredictor:
         vectorizer = dirs.open_pickle_file(self.vectorizer_file_path())
         model = dirs.open_pickle_file(self.model_file_path())
         class_probabilities = model.predict_proba(vectorizer.transform([text_to_predict]))[0]
-        indicies_of_classes_above_threshold = np.argwhere(class_probabilities > self.threshold())
-        # Order results by probability (highest first)
+        all_results = []
         results = {}
-        for index in indicies_of_classes_above_threshold:
-            predicted_node_content_id = model.classes_[index][0]
-            results[tree.find(predicted_node_content_id)] = class_probabilities[index]
-        return sorted(results, key=results.get, reverse=True)
+        for i, probability in enumerate(class_probabilities):
+            predicted_node_content_id = model.classes_[i]
+            is_above_threshold = probability > self.threshold()
+            all_results.append({ 'node_content_id': predicted_node_content_id, 'probability': probability, 'above_threshold': is_above_threshold })
+            if is_above_threshold:
+                results[tree.find(predicted_node_content_id)] = predicted_node_content_id
+        request_record.apex_node_predictor_probabilities = str(all_results)
+        # Order results by probability (highest first)
+        return [sorted(results, key=results.get, reverse=True), request_record]

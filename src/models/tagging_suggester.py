@@ -27,15 +27,19 @@ class TaggingSuggester:
         end = datetime.datetime.now()
         print(f"DONE! Took: {end - start}")
 
-    def predict(self, text):
+    def predict(self, text, request_record):
         print("PREDICTING")
         start = datetime.datetime.now()
         translated_tokenized_text_to_predict = nlp.dictionary_of_translated_tokenized_text(text)
-        apex_nodes = ApexNodePredictor().predict(self.tree, text, translated_tokenized_text_to_predict)
+        apex_nodes, request_record = ApexNodePredictor().predict(self.tree, text, request_record)
         suggestions = []
         for apex_node in apex_nodes:
-            suggestions.append(BranchPredictor().predict(self.tree, apex_node, text, translated_tokenized_text_to_predict))
+            suggestion, request_record = BranchPredictor().predict(self.tree, apex_node, text, translated_tokenized_text_to_predict, request_record)
+            suggestions.append(suggestion)
         suggestions = misc.flatten(suggestions)
+        request_record.predictions = str(suggestions)
         end = datetime.datetime.now()
-        print(f"DONE! Took {end - start}")
-        return suggestions
+        duration = end - start
+        print(f"DONE! Took {duration}")
+        request_record.prediction_duration = str(duration)
+        return [suggestions, request_record]
