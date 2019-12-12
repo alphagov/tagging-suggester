@@ -8,6 +8,8 @@ applications:
     instances: 1
     disk_quota: 1GB
     memory: 512M
+    services:
+      - tagging-suggester-db
 
     # We can specify the command to run here in the manifest
     # or in the Procfile. This might be useful if we want to
