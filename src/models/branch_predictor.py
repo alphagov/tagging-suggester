@@ -66,14 +66,14 @@ class BranchPredictor:
         # We can't make a prediction for a node that doesn't have children
         return len(node.recursive_children()) > 1
 
-    def predict(self, tree, apex_node, text_to_predict, translated_tokenized_text_to_predict):
+    def predict(self, tree, apex_node, text_to_predict, translated_tokenized_text_to_predict, request_record):
         """
         Makes a prediction for text_to_predict for any taxon beneath the apex_node
         Uses the translated_tokenized_text_to_predict to tell the user which words
         it considered important when making the prediction
         """
         node = apex_node
-        result = []
+        results = []
         while self.can_make_prediction_for_node(node):
             model = dirs.open_pickle_file(self.model_path(node))
             vectorizer = dirs.open_pickle_file(self.vectorizer_path(node))
@@ -81,6 +81,11 @@ class BranchPredictor:
             words_to_explain_choice = nlp.prediction_explanation(vectorizer, transformed_text, translated_tokenized_text_to_predict)
             probabilities = model.predict_proba(transformed_text)
             highest_probability_content_id = model.classes_[np.argmax(probabilities)]
-            result.append({'taxon_content_id': highest_probability_content_id, 'explanation': words_to_explain_choice})
+            probabilities_for_taxon = {}
+            for i, probability in enumerate(probabilities[0]):
+                probabilities_for_taxon[model.classes_[i]] = probability
+            result = {'taxon_content_id': highest_probability_content_id, 'explanation': words_to_explain_choice, 'probabilities': probabilities_for_taxon }
+            results.append(result)
             node = tree.find(highest_probability_content_id)
-        return result
+        request_record.branch_predictor_probabilities += f", {apex_node.content_id}: {results}"
+        return [results, request_record]
